@@ -9,3 +9,5 @@ MAP上に置いたピンを移動させることで、サイトを見ている�
 
 現在、鎌倉MAPと上野公園MAPに対応済み。
 https://kyouikusupport.github.io/active-map/
+
+![image](https://github.com/user-attachments/assets/ac17424d-503c-4095-8562-91bb14977b11)
