@@ -13,6 +13,7 @@ const MAX班 = 12;
 const MIN班 = 1;
 let 現在の班数 = 6;
 const 班マーカー = {}; // 班名 → marker のマップ
+const 色リスト = ['#007bff', '#dc3545', '#28a745', '#ffc107', '#6610f2', '#17a2b8'];
 
 function createNumberedMarker(latlng, number, draggable = true, color = '#007bff') {
   const icon = L.divIcon({
@@ -100,42 +101,53 @@ function setup班(班名, 初期座標 = [35.316, 139.55], 初期色 = '#007bff'
 
   marker.on('contextmenu', function (e) {
     e.originalEvent.preventDefault();
-    const input = document.createElement('input');
-    input.type = 'color';
-    input.value = 現在の色;
-    input.style.position = 'absolute';
-    input.style.left = e.originalEvent.pageX + 'px';
-    input.style.top = e.originalEvent.pageY + 'px';
-    input.style.zIndex = 10000;
-    document.body.appendChild(input);
-    input.click();
 
-    input.addEventListener('input', () => {
-      現在の色 = input.value;
-      const newIcon = L.divIcon({
-        className: 'numbered-marker',
-        html: `
-          <div class="pin-number" style="background-color: ${現在の色};">
-            ${班番号}
-            <div class="pin-arrow" style="border-top-color: ${現在の色};"></div>
-          </div>
-        `,
-        iconSize: [30, 42],
-        iconAnchor: [15, 42]
-      });
-      marker.setIcon(newIcon);
-      const pos = marker.getLatLng();
-      set(ref(db, 班名), {
-        lat: pos.lat,
-        lng: pos.lng,
-        color: 現在の色
-      });
-      document.body.removeChild(input);
+    const menu = document.createElement('div');
+    menu.style.position = 'absolute';
+    menu.style.left = `${e.originalEvent.pageX}px`;
+    menu.style.top = `${e.originalEvent.pageY}px`;
+    menu.style.zIndex = 10000;
+    menu.style.background = 'white';
+    menu.style.border = '1px solid #ccc';
+    menu.style.padding = '4px';
+    menu.style.display = 'flex';
+    menu.style.gap = '4px';
+
+    色リスト.forEach(color => {
+      const colorBtn = document.createElement('div');
+      colorBtn.style.width = '20px';
+      colorBtn.style.height = '20px';
+      colorBtn.style.backgroundColor = color;
+      colorBtn.style.cursor = 'pointer';
+      colorBtn.title = color;
+      colorBtn.onclick = () => {
+        現在の色 = color;
+        const newIcon = L.divIcon({
+          className: 'numbered-marker',
+          html: `
+            <div class="pin-number" style="background-color: ${現在の色};">
+              ${班番号}
+              <div class="pin-arrow" style="border-top-color: ${現在の色};"></div>
+            </div>
+          `,
+          iconSize: [30, 42],
+          iconAnchor: [15, 42]
+        });
+        marker.setIcon(newIcon);
+        const pos = marker.getLatLng();
+        set(ref(db, 班名), {
+          lat: pos.lat,
+          lng: pos.lng,
+          color: 現在の色
+        });
+        document.body.removeChild(menu);
+      };
+      menu.appendChild(colorBtn);
     });
 
-    input.addEventListener('blur', () => {
-      document.body.removeChild(input);
-    });
+    document.body.appendChild(menu);
+    const removeMenu = () => { if (document.body.contains(menu)) document.body.removeChild(menu); };
+    setTimeout(() => document.addEventListener('click', removeMenu, { once: true }), 0);
   });
 
   onValue(ref(db, 班名), (snapshot) => {
