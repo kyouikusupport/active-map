@@ -21,7 +21,7 @@ function createNumberedMarker(latlng, number, draggable = true, color = '#007bff
     html: `
       <div class="pin-number" style="background-color: ${color};">
         ${number}
-        <div class="pin-arrow" style="border-top-color: ${color};"></div>
+        <div class="pin-arrow" style="border-top-color: currentColor;"></div>
       </div>
     `,
     iconSize: [30, 42],
