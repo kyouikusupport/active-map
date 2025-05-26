@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
-import { getDatabase, ref, set, onValue, remove, get, child } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+import { getDatabase, ref, set, onValue, remove, get, child, onChildRemoved, onChildAdded } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 import { firebaseConfig } from './js/firebase-config.js';
 
 const app = initializeApp(firebaseConfig);
@@ -34,26 +34,42 @@ function createNumberedMarker(latlng, number, draggable = true, color = '#007bff
   });
 }
 
-// Firebaseから班データを読み込む
+// 初期読み込み
 get(child(ref(db), '/')).then((snapshot) => {
   if (snapshot.exists()) {
     const 班一覧 = snapshot.val();
     const 班名リスト = Object.keys(班一覧).filter(name => /^班\d+$/.test(name)).sort((a, b) => {
       return parseInt(a.replace("班", "")) - parseInt(b.replace("班", ""));
     });
-
     現在の班数 = 班名リスト.length;
-
     班名リスト.forEach(班名 => {
       const { lat, lng, color } = 班一覧[班名];
       setup班(班名, [lat, lng], color);
     });
-  } else {
-    for (let i = 1; i <= 現在の班数; i++) {
-      setup班(`班${i}`);
-    }
   }
 });
+
+// 追加された班の監視
+toMonitorChanges();
+
+function toMonitorChanges() {
+  const rootRef = ref(db);
+  onChildAdded(rootRef, (snapshot) => {
+    const 班名 = snapshot.key;
+    if (!班マーカー[班名] && /^班\d+$/.test(班名)) {
+      const { lat, lng, color } = snapshot.val();
+      setup班(班名, [lat, lng], color);
+    }
+  });
+
+  onChildRemoved(rootRef, (snapshot) => {
+    const 班名 = snapshot.key;
+    if (班マーカー[班名]) {
+      map.removeLayer(班マーカー[班名]);
+      delete 班マーカー[班名];
+    }
+  });
+}
 
 // ＋班を追加
 document.getElementById("add-marker-btn").addEventListener("click", () => {
@@ -66,10 +82,6 @@ document.getElementById("add-marker-btn").addEventListener("click", () => {
 document.getElementById("remove-marker-btn").addEventListener("click", () => {
   if (現在の班数 <= MIN班) return;
   const 班名 = `班${現在の班数}`;
-  if (班マーカー[班名]) {
-    map.removeLayer(班マーカー[班名]);
-    delete 班マーカー[班名];
-  }
   remove(ref(db, 班名));
   現在の班数--;
 });
