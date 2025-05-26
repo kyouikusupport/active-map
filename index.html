@@ -1,23 +1,50 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <title>修学旅行 班の現在地マップ</title>
+  <meta charset="UTF-8">
+  <title>班の現在地マップ</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     #map { height: 100vh; }
+
+    /* ピンの番号表示スタイル */
+    .numbered-marker .pin-number {
+      background-color: #007bff;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      text-align: center;
+      line-height: 30px;
+      box-shadow: 0 0 3px rgba(0,0,0,0.4);
+    }
+
+    /* ボタンスタイル */
+    #controls {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 1000;
+    }
+    #controls button {
+      padding: 8px 12px;
+      font-size: 16px;
+      margin-bottom: 5px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
   <div id="map"></div>
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script type="module" src="main.js"></script>
-
-  <div style="position: absolute; top: 10px; right: 10px; z-index: 1000;">
-    <button id="add-marker-btn" style="padding: 8px 12px; font-size: 16px; margin-bottom: 5px;">＋班を追加</button><br>
-    <button id="remove-marker-btn" style="padding: 8px 12px; font-size: 16px;">−班を削除</button>
+  <div id="controls">
+    <button id="add-marker-btn">＋班を追加</button><br>
+    <button id="remove-marker-btn">−班を削除</button>
   </div>
 
-  
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script type="module" src="main.js"></script>
 </body>
 </html>
