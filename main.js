@@ -27,21 +27,61 @@ function createNumberedMarker(latlng, number, draggable = true, color = '#007bff
     iconSize: [30, 42],
     iconAnchor: [15, 42]
   });
+  return L.marker(latlng, { icon, draggable });
+}
 
-  return L.marker(latlng, {
-    icon: icon,
-    draggable: draggable
+function setup班(班名, 初期座標 = [35.316, 139.55], 初期色 = '#007bff') {
+  const 班番号 = parseInt(班名.replace("班", ""), 10);
+  if (isNaN(班番号)) return;
+  let 現在の色 = 初期色;
+  const marker = createNumberedMarker(初期座標, 班番号, true, 現在の色).addTo(map);
+  班マーカー[班名] = marker;
+  marker.bindPopup(班名);
+
+  marker.on('dragend', e => {
+    const pos = e.target.getLatLng();
+    set(ref(db, 班名), { lat: pos.lat, lng: pos.lng, color: 現在の色 });
+  });
+
+  marker.on('contextmenu', e => {
+    e.originalEvent.preventDefault();
+    const menu = document.createElement('div');
+    menu.style.cssText = `position:absolute;left:${e.originalEvent.pageX}px;top:${e.originalEvent.pageY}px;z-index:10000;background:white;border:1px solid #ccc;padding:4px;display:flex;gap:4px;`;
+    色リスト.forEach(color => {
+      const colorBtn = document.createElement('div');
+      colorBtn.style.cssText = `width:20px;height:20px;background:${color};cursor:pointer;`;
+      colorBtn.onclick = () => {
+        現在の色 = color;
+        const newIcon = createNumberedMarker(marker.getLatLng(), 班番号, true, color).options.icon;
+        marker.setIcon(newIcon);
+        const pos = marker.getLatLng();
+        set(ref(db, 班名), { lat: pos.lat, lng: pos.lng, color });
+        document.body.removeChild(menu);
+      };
+      menu.appendChild(colorBtn);
+    });
+    document.body.appendChild(menu);
+    setTimeout(() => document.addEventListener('click', () => menu.remove(), { once: true }), 0);
+  });
+
+  onValue(ref(db, 班名), snapshot => {
+    const data = snapshot.val();
+    if (data?.lat && data?.lng) {
+      marker.setLatLng([data.lat, data.lng]);
+      if (data.color && data.color !== 現在の色) {
+        現在の色 = data.color;
+        marker.setIcon(createNumberedMarker([data.lat, data.lng], 班番号, true, data.color).options.icon);
+      }
+    }
   });
 }
 
 // 初期読み込み
-get(child(ref(db), '/')).then((snapshot) => {
+get(child(ref(db), '/')).then(snapshot => {
   if (snapshot.exists()) {
     const 班一覧 = snapshot.val();
-    const 班名リスト = Object.keys(班一覧).filter(name => /^班\d+$/.test(name)).sort((a, b) => {
-      return parseInt(a.replace("班", "")) - parseInt(b.replace("班", ""));
-    });
-    現在の班数 = 現在の班数 < 班名リスト.length ? 現在の班数 : 現在の班数;
+    const 班名リスト = Object.keys(班一覧).filter(name => /^班\d+$/.test(name)).sort((a, b) => parseInt(a.replace("班", "")) - parseInt(b.replace("班", "")));
+    現在の班数 = 班名リスト.length;
     班名リスト.forEach(班名 => {
       const { lat, lng, color } = 班一覧[班名];
       setup班(班名, [lat, lng], color);
@@ -49,116 +89,53 @@ get(child(ref(db), '/')).then((snapshot) => {
   }
 });
 
-// 追加された班の監視
-function toMonitorChanges() {
-  const rootRef = ref(db);
-  onChildAdded(rootRef, (snapshot) => {
-    const 班名 = snapshot.key;
-    if (!班マーカー[班名] && /^班\d+$/.test(班名)) {
-      const { lat, lng, color } = snapshot.val();
-      setup班(班名, [lat, lng], color);
-    }
-  });
-
-  onChildRemoved(rootRef, (snapshot) => {
-    const 班名 = snapshot.key;
-    if (班マーカー[班名]) {
-      map.removeLayer(班マーカー[班名]);
-      delete 班マーカー[班名];
-    }
-  });
-}
-toMonitorChanges();
-
-// ＋班を追加
-document.getElementById("add-marker-btn").addEventListener("click", () => {
-  if (現在の班数 >= MAX班) return;
-  現在の班数++;
-  setup班(`班${現在の班数}`);
+onChildAdded(ref(db), snapshot => {
+  const 班名 = snapshot.key;
+  if (!班マーカー[班名] && /^班\d+$/.test(班名)) {
+    const { lat, lng, color } = snapshot.val();
+    setup班(班名, [lat, lng], color);
+  }
 });
 
-// −班を削除
-document.getElementById("remove-marker-btn").addEventListener("click", () => {
-  if (現在の班数 <= MIN班) return;
-  const 班名 = `班${現在の班数}`;
-  remove(ref(db, 班名));
-  現在の班数--;
+onChildRemoved(ref(db), snapshot => {
+  const 班名 = snapshot.key;
+  if (班マーカー[班名]) {
+    map.removeLayer(班マーカー[班名]);
+    delete 班マーカー[班名];
+  }
 });
 
-function setup班(班名, 初期座標 = [35.316, 139.55], 初期色 = '#007bff') {
-  const 班番号 = parseInt(班名.replace("班", ""), 10);
-  if (isNaN(班番号)) return;
-
-  let 現在の色 = 初期色;
-  const marker = createNumberedMarker(初期座標, 班番号, true, 現在の色).addTo(map);
-  班マーカー[班名] = marker;
-
-  marker.bindPopup(班名);
-
-  marker.on('dragend', function (e) {
-    const pos = e.target.getLatLng();
-    set(ref(db, 班名), {
-      lat: pos.lat,
-      lng: pos.lng,
-      color: 現在の色
-    });
-  });
-
-  marker.on('contextmenu', function (e) {
-    e.originalEvent.preventDefault();
-
-    const menu = document.createElement('div');
-    menu.style.position = 'absolute';
-    menu.style.left = `${e.originalEvent.pageX}px`;
-    menu.style.top = `${e.originalEvent.pageY}px`;
-    menu.style.zIndex = 10000;
-    menu.style.background = 'white';
-    menu.style.border = '1px solid #ccc';
-    menu.style.padding = '4px';
-    menu.style.display = 'flex';
-    menu.style.gap = '4px';
-
-    色リスト.forEach(color => {
-      const colorBtn = document.createElement('div');
-      colorBtn.style.width = '20px';
-      colorBtn.style.height = '20px';
-      colorBtn.style.backgroundColor = color;
-      colorBtn.style.cursor = 'pointer';
-      colorBtn.title = color;
-      colorBtn.onclick = () => {
-        現在の色 = color;
-        const newIcon = createNumberedMarker(marker.getLatLng(), 班番号, true, color).options.icon;
-        marker.setIcon(newIcon);
-        const pos = marker.getLatLng();
-        set(ref(db, 班名), {
-          lat: pos.lat,
-          lng: pos.lng,
-          color: color
-        });
-        document.body.removeChild(menu);
-      };
-      menu.appendChild(colorBtn);
-    });
-
-    document.body.appendChild(menu);
-    const removeMenu = () => { if (document.body.contains(menu)) document.body.removeChild(menu); };
-    setTimeout(() => document.addEventListener('click', removeMenu, { once: true }), 0);
-  });
-
-  onValue(ref(db, 班名), (snapshot) => {
-    const data = snapshot.val();
-    if (data && typeof data.lat === 'number' && typeof data.lng === 'number') {
-      marker.setLatLng([data.lat, data.lng]);
-      if (data.color && data.color !== 現在の色) {
-        現在の色 = data.color;
-        const newIcon = createNumberedMarker([data.lat, data.lng], 班番号, true, data.color).options.icon;
-        marker.setIcon(newIcon);
-      }
+// ボタン動作（ページに要素があることが前提）
+const addBtn = document.getElementById("add-marker-btn");
+const removeBtn = document.getElementById("remove-marker-btn");
+if (addBtn) addBtn.addEventListener("click", async () => {
+  const snapshot = await get(child(ref(db), "/"));
+  if (snapshot.exists()) {
+    const 班一覧 = snapshot.val();
+    const 班番号一覧 = Object.keys(班一覧)
+      .filter(name => /^班\d+$/.test(name))
+      .map(name => parseInt(name.replace("班", ""), 10))
+      .sort((a, b) => a - b);
+    const 使用済 = new Set(班番号一覧);
+    let 次の番号 = 1;
+    while (使用済.has(次の番号) && 次の番号 <= MAX班) 次の番号++;
+    if (次の番号 <= MAX班) {
+      setup班(`班${次の番号}`);
     }
-  });
-}
+  } else {
+    setup班("班1");
+  }
+});
 
-// 必要なCSSを挿入
+if (removeBtn) removeBtn.addEventListener("click", () => {
+  if (現在の班数 > MIN班) {
+    const 班名 = `班${現在の班数}`;
+    remove(ref(db, 班名));
+    現在の班数--;
+  }
+});
+
+// CSS
 const style = document.createElement('style');
 style.textContent = `
   .pin-number {
@@ -174,7 +151,6 @@ style.textContent = `
     height: 0;
     border-left: 6px solid transparent;
     border-right: 6px solid transparent;
-    border-top: 8px solid transparent;
   }
 `;
 document.head.appendChild(style);
