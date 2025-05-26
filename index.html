@@ -1,63 +1,58 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8">
-  <title>班の現在地マップ</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <style>
-    #map { height: 100vh; }
+<style>
+  #map { height: 100vh; }
 
-    /* ピンの番号表示スタイル（下が尖った形） */
-    .numbered-marker .pin-number {
-      position: relative;
-      background-color: #007bff;
-      color: white;
-      font-size: 16px;
-      font-weight: bold;
-      width: 30px;
-      height: 30px;
-      border-radius: 50%;
-      text-align: center;
-      line-height: 30px;
-      box-shadow: 0 0 3px rgba(0,0,0,0.4);
-    }
+  .numbered-marker .pin-number {
+    position: relative;
+    background-color: #007bff;
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 30px;
+    box-shadow: 0 0 3px rgba(0,0,0,0.4);
+  }
 
-    .numbered-marker .pin-number::after {
-      content: "";
-      position: absolute;
-      bottom: -8px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 0;
-      height: 0;
-      border-left: 6px solid transparent;
-      border-right: 6px solid transparent;
-      border-top: 8px solid #007bff;
-    }
+  /* ← このブロックは削除する！ */
+  /*
+  .numbered-marker .pin-number::after {
+    content: "";
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 8px solid #007bff;
+  }
+  */
 
-    /* ボタンスタイル */
-    #controls {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      z-index: 1000;
-    }
-    #controls button {
-      padding: 8px 12px;
-      font-size: 16px;
-      margin-bottom: 5px;
-      cursor: pointer;
-    }
-  </style>
-</head>
-<body>
-  <div id="map"></div>
-  <div id="controls">
-    <button id="add-marker-btn">＋班を追加</button><br>
-    <button id="remove-marker-btn">−班を削除</button>
-  </div>
+  .pin-arrow {
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 8px solid black; /* ← default 黒にしておく */
+  }
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script type="module" src="main.js"></script>
-</body>
-</html>
+  #controls {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 1000;
+  }
+  #controls button {
+    padding: 8px 12px;
+    font-size: 16px;
+    margin-bottom: 5px;
+    cursor: pointer;
+  }
+</style>
