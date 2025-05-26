@@ -72,9 +72,11 @@ function setup班(班名, 初期座標 = [35.316, 139.55]) {
   const 班番号 = parseInt(班名.replace("班", ""), 10);
   if (isNaN(班番号)) return; // 無効な名前をスキップ
 
-  const marker = createNumberedMarker(初期座標, 班番号).addTo(map)
-    .bindPopup(班名).openPopup();
+  const marker = createNumberedMarker(初期座標, 班番号).addTo(map);
   班マーカー[班名] = marker;
+
+  // 初期読み込み時はポップアップを開かない（openPopup 削除）
+  marker.bindPopup(班名);
 
   set(ref(db, 班名), {
     lat: 初期座標[0],
