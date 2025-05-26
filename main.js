@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
-import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+import { getDatabase, ref, set, onValue, remove, get, child } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 import { firebaseConfig } from './js/firebase-config.js';
 
 const app = initializeApp(firebaseConfig);
@@ -14,7 +14,6 @@ const MIN班 = 1;
 let 現在の班数 = 6;
 const 班マーカー = {}; // 班名 → marker のマップ
 
-// ピン付き番号マーカーを生成
 function createNumberedMarker(latlng, number, draggable = true) {
   const icon = L.divIcon({
     className: 'numbered-marker',
@@ -29,10 +28,27 @@ function createNumberedMarker(latlng, number, draggable = true) {
   });
 }
 
-// 初期表示：班1〜班6
-for (let i = 1; i <= 現在の班数; i++) {
-  setup班(`班${i}`);
-}
+// Firebaseから班データを読み込む
+get(child(ref(db), '/')).then((snapshot) => {
+  if (snapshot.exists()) {
+    const 班一覧 = snapshot.val();
+    const 班名リスト = Object.keys(班一覧).sort((a, b) => {
+      return parseInt(a.replace("班", "")) - parseInt(b.replace("班", ""));
+    });
+
+    現在の班数 = 班名リスト.length;
+
+    班名リスト.forEach(班名 => {
+      const { lat, lng } = 班一覧[班名];
+      setup班(班名, [lat, lng]);
+    });
+  } else {
+    // デフォルトで班1〜6を設置
+    for (let i = 1; i <= 現在の班数; i++) {
+      setup班(`班${i}`);
+    }
+  }
+});
 
 // ＋班を追加
 document.getElementById("add-marker-btn").addEventListener("click", () => {
@@ -53,14 +69,14 @@ document.getElementById("remove-marker-btn").addEventListener("click", () => {
   現在の班数--;
 });
 
-function setup班(班名) {
-  const 初期座標 = [35.316, 139.55];
+function setup班(班名, 初期座標 = [35.316, 139.55]) {
   const 班番号 = parseInt(班名.replace("班", ""), 10);
 
   const marker = createNumberedMarker(初期座標, 班番号).addTo(map)
     .bindPopup(班名).openPopup();
   班マーカー[班名] = marker;
 
+  // Firebaseに保存（新規作成時のみ）
   set(ref(db, 班名), {
     lat: 初期座標[0],
     lng: 初期座標[1]
