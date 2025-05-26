@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
-import { getDatabase, ref, set, onValue, remove, get, child, onChildRemoved, onChildAdded } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
+import { getDatabase, ref, set, onValue, remove, get, child, onChildRemoved, onChildAdded, onChildChanged } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
 import { firebaseConfig } from './js/firebase-config.js';
 
 const app = initializeApp(firebaseConfig);
@@ -11,7 +11,6 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 const MAX班 = 12;
 const MIN班 = 1;
-let 現在の班数 = 6;
 const 班マーカー = {}; // 班名 → marker のマップ
 const 色リスト = ['#007bff', '#dc3545', '#28a745', '#ffc107', '#6610f2', '#17a2b8'];
 
@@ -76,19 +75,6 @@ function setup班(班名, 初期座標 = [35.316, 139.55], 初期色 = '#007bff'
   });
 }
 
-// 初期読み込み
-get(child(ref(db), '/')).then(snapshot => {
-  if (snapshot.exists()) {
-    const 班一覧 = snapshot.val();
-    const 班名リスト = Object.keys(班一覧).filter(name => /^班\d+$/.test(name)).sort((a, b) => parseInt(a.replace("班", "")) - parseInt(b.replace("班", "")));
-    現在の班数 = 班名リスト.length;
-    班名リスト.forEach(班名 => {
-      const { lat, lng, color } = 班一覧[班名];
-      setup班(班名, [lat, lng], color);
-    });
-  }
-});
-
 onChildAdded(ref(db), snapshot => {
   const 班名 = snapshot.key;
   if (!班マーカー[班名] && /^班\d+$/.test(班名)) {
@@ -105,7 +91,6 @@ onChildRemoved(ref(db), snapshot => {
   }
 });
 
-// ボタン動作（ページに要素があることが前提）
 const addBtn = document.getElementById("add-marker-btn");
 const removeBtn = document.getElementById("remove-marker-btn");
 if (addBtn) addBtn.addEventListener("click", async () => {
@@ -120,22 +105,35 @@ if (addBtn) addBtn.addEventListener("click", async () => {
     let 次の番号 = 1;
     while (使用済.has(次の番号) && 次の番号 <= MAX班) 次の番号++;
     if (次の番号 <= MAX班) {
-      setup班(`班${次の番号}`);
+      const 班名 = `班${次の番号}`;
+      set(ref(db, 班名), {
+        lat: 35.316,
+        lng: 139.55,
+        color: '#007bff'
+      });
     }
   } else {
-    setup班("班1");
+    set(ref(db, "班1"), {
+      lat: 35.316,
+      lng: 139.55,
+      color: '#007bff'
+    });
   }
 });
 
-if (removeBtn) removeBtn.addEventListener("click", () => {
-  if (現在の班数 > MIN班) {
-    const 班名 = `班${現在の班数}`;
-    remove(ref(db, 班名));
-    現在の班数--;
+if (removeBtn) removeBtn.addEventListener("click", async () => {
+  const snapshot = await get(child(ref(db), "/"));
+  if (snapshot.exists()) {
+    const 班一覧 = snapshot.val();
+    const 班名リスト = Object.keys(班一覧)
+      .filter(name => /^班\d+$/.test(name))
+      .map(name => parseInt(name.replace("班", ""), 10))
+      .sort((a, b) => b - a);
+    const 班名 = `班${班名リスト[0]}`;
+    await remove(ref(db, 班名));
   }
 });
 
-// CSS
 const style = document.createElement('style');
 style.textContent = `
   .pin-number {
@@ -151,6 +149,7 @@ style.textContent = `
     height: 0;
     border-left: 6px solid transparent;
     border-right: 6px solid transparent;
+    border-top: 8px solid black;
   }
 `;
 document.head.appendChild(style);
