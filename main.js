@@ -122,17 +122,7 @@ function setup班(班名, 初期座標 = [35.316, 139.55], 初期色 = '#007bff'
       colorBtn.title = color;
       colorBtn.onclick = () => {
         現在の色 = color;
-        const newIcon = L.divIcon({
-          className: 'numbered-marker',
-          html: `
-            <div class="pin-number" style="background-color: ${現在の色};">
-              ${班番号}
-              <div class="pin-arrow" style="border-top-color: ${現在の色};"></div>
-            </div>
-          `,
-          iconSize: [30, 42],
-          iconAnchor: [15, 42]
-        });
+        const newIcon = createNumberedMarker(marker.getLatLng(), 班番号, true, 現在の色).options.icon;
         marker.setIcon(newIcon);
         const pos = marker.getLatLng();
         set(ref(db, 班名), {
@@ -173,7 +163,7 @@ style.textContent = `
     height: 0;
     border-left: 6px solid transparent;
     border-right: 6px solid transparent;
-    border-top: 8px solid #007bff;
+    border-top: 8px solid transparent;
   }
 `;
 document.head.appendChild(style);
