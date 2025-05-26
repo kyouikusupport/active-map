@@ -20,7 +20,7 @@ function createNumberedMarker(latlng, number, draggable = true, color = '#007bff
     className: 'numbered-marker',
     html: `
       <div class="pin-number" style="background-color: ${color}; color: ${color};">
-        ${number}
+        <span class="pin-label" style="color: white; font-weight: bold; position: relative; z-index: 1;">${number}</span>
         <div class="pin-arrow"></div>
       </div>
     `,
@@ -41,7 +41,7 @@ get(child(ref(db), '/')).then((snapshot) => {
     const 班名リスト = Object.keys(班一覧).filter(name => /^班\d+$/.test(name)).sort((a, b) => {
       return parseInt(a.replace("班", "")) - parseInt(b.replace("班", ""));
     });
-    現在の班数 = 班名リスト.length;
+    現在の班数 = 現在の班数 < 班名リスト.length ? 現在の班数 : 班名リスト.length;
     班名リスト.forEach(班名 => {
       const { lat, lng, color } = 班一覧[班名];
       setup班(班名, [lat, lng], color);
@@ -50,8 +50,6 @@ get(child(ref(db), '/')).then((snapshot) => {
 });
 
 // 追加された班の監視
-toMonitorChanges();
-
 function toMonitorChanges() {
   const rootRef = ref(db);
   onChildAdded(rootRef, (snapshot) => {
@@ -70,6 +68,7 @@ function toMonitorChanges() {
     }
   });
 }
+toMonitorChanges();
 
 // ＋班を追加
 document.getElementById("add-marker-btn").addEventListener("click", () => {
@@ -157,7 +156,7 @@ function setup班(班名, 初期座標 = [35.316, 139.55], 初期色 = '#007bff'
       }
     }
   });
-} 
+}
 
 // 必要なCSSを挿入
 const style = document.createElement('style');
@@ -165,6 +164,7 @@ style.textContent = `
   .pin-number {
     position: relative;
     color: inherit;
+    text-align: center;
   }
   .pin-arrow {
     position: absolute;
