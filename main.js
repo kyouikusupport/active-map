@@ -4,14 +4,22 @@ import { firebaseConfig } from './js/firebase-config.js';
 
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
-const map = L.map('map').setView([35.316, 139.55], 14);
+
+const locationPresets = {
+  "kamakura": { center: [35.316, 139.55], zoom: 14 },
+  "ueno": { center: [35.7148, 139.7745], zoom: 16 }
+};
+
+let currentLocationKey = "kamakura";
+
+const map = L.map('map').setView(locationPresets[currentLocationKey].center, locationPresets[currentLocationKey].zoom);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '&copy; OpenStreetMap contributors'
 }).addTo(map);
 
 const MAX班 = 12;
 const MIN班 = 1;
-const 班マーカー = {}; // 班名 → marker のマップ
+const 班マーカー = {};
 const 色リスト = ['#007bff', '#dc3545', '#28a745', '#ffc107', '#6610f2', '#17a2b8'];
 
 function createNumberedMarker(latlng, number, draggable = true, color = '#007bff') {
@@ -29,7 +37,7 @@ function createNumberedMarker(latlng, number, draggable = true, color = '#007bff
   return L.marker(latlng, { icon, draggable });
 }
 
-function setup班(班名, 初期座標 = [35.316, 139.55], 初期色 = '#007bff') {
+function setup班(班名, 初期座標, 初期色 = '#007bff') {
   const 班番号 = parseInt(班名.replace("班", ""), 10);
   if (isNaN(班番号)) return;
   let 現在の色 = 初期色;
@@ -93,6 +101,9 @@ onChildRemoved(ref(db), snapshot => {
 
 const addBtn = document.getElementById("add-marker-btn");
 const removeBtn = document.getElementById("remove-marker-btn");
+const kamakuraBtn = document.getElementById("goto-kamakura-btn");
+const uenoBtn = document.getElementById("goto-ueno-btn");
+
 if (addBtn) addBtn.addEventListener("click", async () => {
   const snapshot = await get(child(ref(db), "/"));
   if (snapshot.exists()) {
@@ -106,16 +117,18 @@ if (addBtn) addBtn.addEventListener("click", async () => {
     while (使用済.has(次の番号) && 次の番号 <= MAX班) 次の番号++;
     if (次の番号 <= MAX班) {
       const 班名 = `班${次の番号}`;
+      const { center } = locationPresets[currentLocationKey];
       set(ref(db, 班名), {
-        lat: 35.316,
-        lng: 139.55,
+        lat: center[0],
+        lng: center[1],
         color: '#007bff'
       });
     }
   } else {
+    const { center } = locationPresets[currentLocationKey];
     set(ref(db, "班1"), {
-      lat: 35.316,
-      lng: 139.55,
+      lat: center[0],
+      lng: center[1],
       color: '#007bff'
     });
   }
@@ -132,6 +145,18 @@ if (removeBtn) removeBtn.addEventListener("click", async () => {
     const 班名 = `班${班名リスト[0]}`;
     await remove(ref(db, 班名));
   }
+});
+
+if (kamakuraBtn) kamakuraBtn.addEventListener("click", () => {
+  currentLocationKey = "kamakura";
+  const { center, zoom } = locationPresets[currentLocationKey];
+  map.setView(center, zoom);
+});
+
+if (uenoBtn) uenoBtn.addEventListener("click", () => {
+  currentLocationKey = "ueno";
+  const { center, zoom } = locationPresets[currentLocationKey];
+  map.setView(center, zoom);
 });
 
 const style = document.createElement('style');
