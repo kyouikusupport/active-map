@@ -19,9 +19,9 @@ function createNumberedMarker(latlng, number, draggable = true, color = '#007bff
   const icon = L.divIcon({
     className: 'numbered-marker',
     html: `
-      <div class="pin-number" style="background-color: ${color}; color: ${color};">
+      <div class="pin-number" style="background-color: ${color};">
         <span class="pin-label" style="color: white; font-weight: bold; position: relative; z-index: 1;">${number}</span>
-        <div class="pin-arrow"></div>
+        <div class="pin-arrow" style="border-top: 8px solid ${color};"></div>
       </div>
     `,
     iconSize: [30, 42],
@@ -41,7 +41,7 @@ get(child(ref(db), '/')).then((snapshot) => {
     const 班名リスト = Object.keys(班一覧).filter(name => /^班\d+$/.test(name)).sort((a, b) => {
       return parseInt(a.replace("班", "")) - parseInt(b.replace("班", ""));
     });
-    現在の班数 = 現在の班数 < 班名リスト.length ? 現在の班数 : 班名リスト.length;
+    現在の班数 = 現在の班数 < 班名リスト.length ? 現在の班数 : 現在の班数;
     班名リスト.forEach(班名 => {
       const { lat, lng, color } = 班一覧[班名];
       setup班(班名, [lat, lng], color);
@@ -163,7 +163,6 @@ const style = document.createElement('style');
 style.textContent = `
   .pin-number {
     position: relative;
-    color: inherit;
     text-align: center;
   }
   .pin-arrow {
@@ -175,7 +174,6 @@ style.textContent = `
     height: 0;
     border-left: 6px solid transparent;
     border-right: 6px solid transparent;
-    border-top: 8px solid currentColor;
   }
 `;
 document.head.appendChild(style);
