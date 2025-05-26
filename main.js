@@ -127,13 +127,13 @@ function setup班(班名, 初期座標 = [35.316, 139.55], 初期色 = '#007bff'
       colorBtn.title = color;
       colorBtn.onclick = () => {
         現在の色 = color;
-        const newIcon = createNumberedMarker(marker.getLatLng(), 班番号, true, 現在の色).options.icon;
+        const newIcon = createNumberedMarker(marker.getLatLng(), 班番号, true, color).options.icon;
         marker.setIcon(newIcon);
         const pos = marker.getLatLng();
         set(ref(db, 班名), {
           lat: pos.lat,
           lng: pos.lng,
-          color: 現在の色
+          color: color
         });
         document.body.removeChild(menu);
       };
@@ -151,7 +151,7 @@ function setup班(班名, 初期座標 = [35.316, 139.55], 初期色 = '#007bff'
       marker.setLatLng([data.lat, data.lng]);
       if (data.color && data.color !== 現在の色) {
         現在の色 = data.color;
-        const newIcon = createNumberedMarker([data.lat, data.lng], 班番号, true, 現在の色).options.icon;
+        const newIcon = createNumberedMarker([data.lat, data.lng], 班番号, true, data.color).options.icon;
         marker.setIcon(newIcon);
       }
     }
