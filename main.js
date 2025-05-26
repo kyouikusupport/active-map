@@ -17,7 +17,12 @@ const 班マーカー = {}; // 班名 → marker のマップ
 function createNumberedMarker(latlng, number, draggable = true, color = '#007bff') {
   const icon = L.divIcon({
     className: 'numbered-marker',
-    html: `<div class="pin-number" style="background-color: ${color};">${number}</div>`,
+    html: `
+      <div class="pin-number" style="background-color: ${color};">
+        ${number}
+        <div class="pin-arrow" style="border-top-color: ${color};"></div>
+      </div>
+    `,
     iconSize: [30, 42],
     iconAnchor: [15, 42]
   });
@@ -109,7 +114,12 @@ function setup班(班名, 初期座標 = [35.316, 139.55], 初期色 = '#007bff'
       現在の色 = input.value;
       const newIcon = L.divIcon({
         className: 'numbered-marker',
-        html: `<div class="pin-number" style="background-color: ${現在の色};">${班番号}</div>`,
+        html: `
+          <div class="pin-number" style="background-color: ${現在の色};">
+            ${班番号}
+            <div class="pin-arrow" style="border-top-color: ${現在の色};"></div>
+          </div>
+        `,
         iconSize: [30, 42],
         iconAnchor: [15, 42]
       });
@@ -134,4 +144,24 @@ function setup班(班名, 初期座標 = [35.316, 139.55], 初期色 = '#007bff'
       班マーカー[班名].setLatLng([data.lat, data.lng]);
     }
   });
-}
+} 
+
+// 必要なCSSを挿入
+const style = document.createElement('style');
+style.textContent = `
+  .pin-number {
+    position: relative;
+  }
+  .pin-arrow {
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 8px solid #007bff;
+  }
+`;
+document.head.appendChild(style);
