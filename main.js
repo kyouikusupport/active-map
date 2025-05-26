@@ -1,8 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
 import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
-import { firebaseConfig } from './js/firebase-config.js'; // ←自分のFirebase設定を書く
+import { firebaseConfig } from './js/firebase-config.js';
 
-// Firebase初期化
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
