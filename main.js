@@ -12,7 +12,22 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 const MAX班 = 12;
 const MIN班 = 1;
 let 現在の班数 = 6;
-const 班マーカー = {}; // 班名 → markerのマップ
+const 班マーカー = {}; // 班名 → marker のマップ
+
+// ピン付き番号マーカーを生成
+function createNumberedMarker(latlng, number, draggable = true) {
+  const icon = L.divIcon({
+    className: 'numbered-marker',
+    html: `<div class="pin-number">${number}</div>`,
+    iconSize: [30, 42],
+    iconAnchor: [15, 42]
+  });
+
+  return L.marker(latlng, {
+    icon: icon,
+    draggable: draggable
+  });
+}
 
 // 初期表示：班1〜班6
 for (let i = 1; i <= 現在の班数; i++) {
@@ -31,18 +46,18 @@ document.getElementById("remove-marker-btn").addEventListener("click", () => {
   if (現在の班数 <= MIN班) return;
   const 班名 = `班${現在の班数}`;
   if (班マーカー[班名]) {
-    map.removeLayer(班マーカー[班名]); // 地図から削除
-    delete 班マーカー[班名];           // 管理マップから削除
+    map.removeLayer(班マーカー[班名]);
+    delete 班マーカー[班名];
   }
-  remove(ref(db, 班名)); // Firebaseから削除
+  remove(ref(db, 班名));
   現在の班数--;
 });
 
-// 関数：ピンの設置と同期
 function setup班(班名) {
   const 初期座標 = [35.316, 139.55];
+  const 班番号 = parseInt(班名.replace("班", ""), 10);
 
-  const marker = L.marker(初期座標, { draggable: true }).addTo(map)
+  const marker = createNumberedMarker(初期座標, 班番号).addTo(map)
     .bindPopup(班名).openPopup();
   班マーカー[班名] = marker;
 
@@ -59,7 +74,6 @@ function setup班(班名) {
     });
   });
 
-  // 他の端末と同期
   onValue(ref(db, 班名), (snapshot) => {
     const data = snapshot.val();
     if (data && 班マーカー[班名]) {
