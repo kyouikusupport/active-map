@@ -32,7 +32,7 @@ function createNumberedMarker(latlng, number, draggable = true) {
 get(child(ref(db), '/')).then((snapshot) => {
   if (snapshot.exists()) {
     const 班一覧 = snapshot.val();
-    const 班名リスト = Object.keys(班一覧).sort((a, b) => {
+    const 班名リスト = Object.keys(班一覧).filter(name => /^班\d+$/.test(name)).sort((a, b) => {
       return parseInt(a.replace("班", "")) - parseInt(b.replace("班", ""));
     });
 
@@ -43,7 +43,6 @@ get(child(ref(db), '/')).then((snapshot) => {
       setup班(班名, [lat, lng]);
     });
   } else {
-    // デフォルトで班1〜6を設置
     for (let i = 1; i <= 現在の班数; i++) {
       setup班(`班${i}`);
     }
@@ -71,12 +70,12 @@ document.getElementById("remove-marker-btn").addEventListener("click", () => {
 
 function setup班(班名, 初期座標 = [35.316, 139.55]) {
   const 班番号 = parseInt(班名.replace("班", ""), 10);
+  if (isNaN(班番号)) return; // 無効な名前をスキップ
 
   const marker = createNumberedMarker(初期座標, 班番号).addTo(map)
     .bindPopup(班名).openPopup();
   班マーカー[班名] = marker;
 
-  // Firebaseに保存（新規作成時のみ）
   set(ref(db, 班名), {
     lat: 初期座標[0],
     lng: 初期座標[1]
@@ -92,7 +91,7 @@ function setup班(班名, 初期座標 = [35.316, 139.55]) {
 
   onValue(ref(db, 班名), (snapshot) => {
     const data = snapshot.val();
-    if (data && 班マーカー[班名]) {
+    if (data && typeof data.lat === 'number' && typeof data.lng === 'number') {
       班マーカー[班名].setLatLng([data.lat, data.lng]);
     }
   });
