@@ -174,6 +174,7 @@ style.textContent = `
     height: 0;
     border-left: 6px solid transparent;
     border-right: 6px solid transparent;
+    border-top: 8px solid transparent;
   }
 `;
 document.head.appendChild(style);
