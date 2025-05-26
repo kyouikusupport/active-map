@@ -84,12 +84,6 @@ function setup班(班名, 初期座標 = [35.316, 139.55], 初期色 = '#007bff'
 
   marker.bindPopup(班名);
 
-  set(ref(db, 班名), {
-    lat: 初期座標[0],
-    lng: 初期座標[1],
-    color: 現在の色
-  });
-
   marker.on('dragend', function (e) {
     const pos = e.target.getLatLng();
     set(ref(db, 班名), {
@@ -143,7 +137,12 @@ function setup班(班名, 初期座標 = [35.316, 139.55], 初期色 = '#007bff'
   onValue(ref(db, 班名), (snapshot) => {
     const data = snapshot.val();
     if (data && typeof data.lat === 'number' && typeof data.lng === 'number') {
-      班マーカー[班名].setLatLng([data.lat, data.lng]);
+      marker.setLatLng([data.lat, data.lng]);
+      if (data.color && data.color !== 現在の色) {
+        現在の色 = data.color;
+        const newIcon = createNumberedMarker([data.lat, data.lng], 班番号, true, 現在の色).options.icon;
+        marker.setIcon(newIcon);
+      }
     }
   });
 } 
