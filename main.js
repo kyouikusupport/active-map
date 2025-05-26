@@ -94,25 +94,37 @@ function setup班(班名, 初期座標 = [35.316, 139.55], 初期色 = '#007bff'
   });
 
   marker.on('contextmenu', function (e) {
-    const colors = ['#007bff', '#dc3545', '#28a745', '#ffc107', '#6610f2'];
-    const currentColorIndex = colors.indexOf(現在の色);
-    const nextColorIndex = (currentColorIndex + 1) % colors.length;
-    現在の色 = colors[nextColorIndex];
+    e.originalEvent.preventDefault();
+    const input = document.createElement('input');
+    input.type = 'color';
+    input.value = 現在の色;
+    input.style.position = 'absolute';
+    input.style.left = e.originalEvent.pageX + 'px';
+    input.style.top = e.originalEvent.pageY + 'px';
+    input.style.zIndex = 10000;
+    document.body.appendChild(input);
+    input.click();
 
-    const 班番号 = parseInt(班名.replace("班", ""));
-    const newIcon = L.divIcon({
-      className: 'numbered-marker',
-      html: `<div class="pin-number" style="background-color: ${現在の色};">${班番号}</div>`,
-      iconSize: [30, 42],
-      iconAnchor: [15, 42]
+    input.addEventListener('input', () => {
+      現在の色 = input.value;
+      const newIcon = L.divIcon({
+        className: 'numbered-marker',
+        html: `<div class="pin-number" style="background-color: ${現在の色};">${班番号}</div>`,
+        iconSize: [30, 42],
+        iconAnchor: [15, 42]
+      });
+      marker.setIcon(newIcon);
+      const pos = marker.getLatLng();
+      set(ref(db, 班名), {
+        lat: pos.lat,
+        lng: pos.lng,
+        color: 現在の色
+      });
+      document.body.removeChild(input);
     });
-    marker.setIcon(newIcon);
 
-    const pos = marker.getLatLng();
-    set(ref(db, 班名), {
-      lat: pos.lat,
-      lng: pos.lng,
-      color: 現在の色
+    input.addEventListener('blur', () => {
+      document.body.removeChild(input);
     });
   });
 
