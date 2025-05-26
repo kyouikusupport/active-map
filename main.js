@@ -14,10 +14,10 @@ const MIN班 = 1;
 let 現在の班数 = 6;
 const 班マーカー = {}; // 班名 → marker のマップ
 
-function createNumberedMarker(latlng, number, draggable = true) {
+function createNumberedMarker(latlng, number, draggable = true, color = '#007bff') {
   const icon = L.divIcon({
     className: 'numbered-marker',
-    html: `<div class="pin-number">${number}</div>`,
+    html: `<div class="pin-number" style="background-color: ${color};">${number}</div>`,
     iconSize: [30, 42],
     iconAnchor: [15, 42]
   });
@@ -39,8 +39,8 @@ get(child(ref(db), '/')).then((snapshot) => {
     現在の班数 = 班名リスト.length;
 
     班名リスト.forEach(班名 => {
-      const { lat, lng } = 班一覧[班名];
-      setup班(班名, [lat, lng]);
+      const { lat, lng, color } = 班一覧[班名];
+      setup班(班名, [lat, lng], color);
     });
   } else {
     for (let i = 1; i <= 現在の班数; i++) {
@@ -68,26 +68,51 @@ document.getElementById("remove-marker-btn").addEventListener("click", () => {
   現在の班数--;
 });
 
-function setup班(班名, 初期座標 = [35.316, 139.55]) {
+function setup班(班名, 初期座標 = [35.316, 139.55], 初期色 = '#007bff') {
   const 班番号 = parseInt(班名.replace("班", ""), 10);
-  if (isNaN(班番号)) return; // 無効な名前をスキップ
+  if (isNaN(班番号)) return;
 
-  const marker = createNumberedMarker(初期座標, 班番号).addTo(map);
+  let 現在の色 = 初期色;
+  const marker = createNumberedMarker(初期座標, 班番号, true, 現在の色).addTo(map);
   班マーカー[班名] = marker;
 
-  // 初期読み込み時はポップアップを開かない（openPopup 削除）
   marker.bindPopup(班名);
 
   set(ref(db, 班名), {
     lat: 初期座標[0],
-    lng: 初期座標[1]
+    lng: 初期座標[1],
+    color: 現在の色
   });
 
   marker.on('dragend', function (e) {
     const pos = e.target.getLatLng();
     set(ref(db, 班名), {
       lat: pos.lat,
-      lng: pos.lng
+      lng: pos.lng,
+      color: 現在の色
+    });
+  });
+
+  marker.on('contextmenu', function (e) {
+    const colors = ['#007bff', '#dc3545', '#28a745', '#ffc107', '#6610f2'];
+    const currentColorIndex = colors.indexOf(現在の色);
+    const nextColorIndex = (currentColorIndex + 1) % colors.length;
+    現在の色 = colors[nextColorIndex];
+
+    const 班番号 = parseInt(班名.replace("班", ""));
+    const newIcon = L.divIcon({
+      className: 'numbered-marker',
+      html: `<div class="pin-number" style="background-color: ${現在の色};">${班番号}</div>`,
+      iconSize: [30, 42],
+      iconAnchor: [15, 42]
+    });
+    marker.setIcon(newIcon);
+
+    const pos = marker.getLatLng();
+    set(ref(db, 班名), {
+      lat: pos.lat,
+      lng: pos.lng,
+      color: 現在の色
     });
   });
 
