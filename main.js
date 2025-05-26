@@ -19,9 +19,9 @@ function createNumberedMarker(latlng, number, draggable = true, color = '#007bff
   const icon = L.divIcon({
     className: 'numbered-marker',
     html: `
-      <div class="pin-number" style="background-color: ${color};">
+      <div class="pin-number" style="background-color: ${color}; color: ${color};">
         ${number}
-        <div class="pin-arrow" style="border-top-color: currentColor;"></div>
+        <div class="pin-arrow"></div>
       </div>
     `,
     iconSize: [30, 42],
@@ -152,6 +152,7 @@ const style = document.createElement('style');
 style.textContent = `
   .pin-number {
     position: relative;
+    color: inherit;
   }
   .pin-arrow {
     position: absolute;
